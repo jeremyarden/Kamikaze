@@ -5,9 +5,8 @@
 #include <GLUT/GLUT.h>  // GLUT, include glu.h and gl.h
  
 /* Global variables */
-char title[] = "3D Shapes with animation";
-GLfloat anglePyramid = 0.5f;  // Rotational angle for pyramid [NEW]
-GLfloat angleCubeX = 0.0f;     // Rotational angle for cube [NEW]
+char title[] = "KAMIKAZE PLANE";
+GLfloat angleCubeX = 0.0f;
 GLfloat angleCubeY = 0.0f;
 GLfloat angleCubeZ = 0.0f;
 GLfloat scale = 1.0f;
@@ -37,7 +36,7 @@ void display() {
    glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
    glScalef(scale, scale, scale);
     
-   glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
+   glBegin(GL_QUADS);                // Begin drawing the color cube with 6 quads
       // Top face (y = 1.0f)
       // Define vertices in counter-clockwise (CCW) order with normal pointing out
       glColor3f(0.0f, 1.0f, 0.0f);     // Green
@@ -81,11 +80,7 @@ void display() {
            glVertex3f(1.0f, -1.0f,  1.0f);
            glVertex3f(1.0f, -1.0f, -1.0f);
         glEnd();  // End of drawing color-cube
-    
 
-
-   glEnd();  // End of drawing color-cube
- 
    glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
  
    // Update the rotational angle after each refresh [NEW]
