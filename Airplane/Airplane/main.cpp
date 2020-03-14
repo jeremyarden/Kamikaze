@@ -7,18 +7,32 @@
 #include <GL/gl.h>
 #include <GL/glut.h>
 
+/*Constants*/
+GLfloat initAnglePyramid = 0.5f;  // Rotational angle for pyramid [NEW]
+GLfloat initAngleCubeX = 0.0f;     // Rotational angle for cube [NEW]
+GLfloat initAngleCubeY = 0.0f;
+GLfloat initAngleCubeZ = 0.0f;
+
+GLfloat initScale = 1.0f;
+
+GLfloat initCameraX = 0.0f;
+GLfloat initCameraY = 0.0f;
+GLfloat initCameraZ = 5.0f;
+
+
+
 /* Global variables */
 char title[] = "3D Shapes with animation";
-GLfloat anglePyramid = 0.5f;  // Rotational angle for pyramid [NEW]
-GLfloat angleCubeX = 0.0f;     // Rotational angle for cube [NEW]
-GLfloat angleCubeY = 0.0f;
-GLfloat angleCubeZ = 0.0f;
+GLfloat anglePyramid = initAnglePyramid;  // Rotational angle for pyramid [NEW]
+GLfloat angleCubeX = initAngleCubeX;     // Rotational angle for cube [NEW]
+GLfloat angleCubeY = initAngleCubeY;
+GLfloat angleCubeZ = initAngleCubeZ;
 
-GLfloat scale = 1.0f;
+GLfloat scale = initScale;
 
-GLfloat cameraX = 0.0f;
-GLfloat cameraY = 0.0f;
-GLfloat cameraZ = 5.0f;
+GLfloat cameraX = initCameraX;
+GLfloat cameraY = initCameraY;
+GLfloat cameraZ = initCameraZ;
 
 int refreshMills = 15;
  
@@ -154,15 +168,16 @@ void display() {
 }
 
 void reset() {
-	angleCubeX = 0.0f;     // Rotational angle for cube [NEW]
-	angleCubeY = 0.0f;
-	angleCubeZ = 0.0f;
+	anglePyramid = initAnglePyramid;  // Rotational angle for pyramid [NEW]
+	angleCubeX = initAngleCubeX;     // Rotational angle for cube [NEW]
+	angleCubeY = initAngleCubeY;
+	angleCubeZ = initAngleCubeZ;
 
-	scale = 1.0f;
+	scale = initScale;
 
-	cameraX = 0.0f;
-	cameraY = 0.0f;
-	cameraZ = 5.0f;
+	cameraX = initCameraX;
+	cameraY = initCameraY;
+	cameraZ = initCameraZ;
 
 }
 
