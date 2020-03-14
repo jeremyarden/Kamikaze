@@ -2,7 +2,8 @@
  * OGL02Animation.cpp: 3D Shapes with animation
  */
 // for MS Windows
-#include <GLUT/GLUT.h>  // GLUT, include glu.h and gl.h
+#include <GL/glut.h>  // GLUT, include glu.h and gl.h
+#include "OBJ_Loader.h"
  
 /* Global variables */
 char title[] = "3D Shapes with animation";
@@ -12,6 +13,9 @@ GLfloat angleCubeY = 0.0f;
 GLfloat angleCubeZ = 0.0f;
 GLfloat scale = 1.0f;
 int refreshMills = 15;
+std::vector<float> vertices;
+std::vector<float> colors;
+std::vector<float> textureCoords;
  
 /* Initialize OpenGL Graphics */
 void initGL() {
@@ -26,67 +30,86 @@ void initGL() {
 /* Handler for window-repaint event. Called back when the window first appears and
    whenever the window needs to be re-painted. */
 void display() {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear color and depth buffers
-   glMatrixMode(GL_MODELVIEW);     // To operate on model-view matrix
+  
+   // Enable everything you need
+   glEnableClientState(GL_VERTEX_ARRAY);
+   glEnableClientState(GL_COLOR_ARRAY);
+   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+   // Set your used arrays
+   glVertexPointer(3, GL_FLOAT, 0, vertices.data());
+   glColorPointer(4, GL_FLOAT, 0, colors.data());
+   glTexCoordPointer(2, GL_FLOAT, 0, textureCoords.data());
+
+   // Draw your mesh
+   glDrawArrays(GL_TRIANGLES, 0, vertices.size()/3); // 'size' is the number of your vertices.
+
+   // Reset initial state
+   glDisableClientState(GL_VERTEX_ARRAY);
+   glDisableClientState(GL_COLOR_ARRAY);
+   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+   
+   // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear color and depth buffers
+   // glMatrixMode(GL_MODELVIEW);     // To operate on model-view matrix
  
-   // Render a color-cube consisting of 6 quads with different colors
-   glLoadIdentity();                 // Reset the model-view matrix
-   glTranslatef(0.0f, 0.0f, -7.0f);  // Move right and into the screen
-   glRotatef(angleCubeX, 1.0f, 0.0f, 0.0f);  // Rotate about (1,1,1)-axis [NEW]
-   glRotatef(angleCubeY, 0.0f, 1.0f, 0.0f);
-   glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
-   glScalef(scale, scale, scale);
+   // // Render a color-cube consisting of 6 quads with different colors
+   // glLoadIdentity();                 // Reset the model-view matrix
+   // glTranslatef(0.0f, 0.0f, -7.0f);  // Move right and into the screen
+   // glRotatef(angleCubeX, 1.0f, 0.0f, 0.0f);  // Rotate about (1,1,1)-axis [NEW]
+   // glRotatef(angleCubeY, 0.0f, 1.0f, 0.0f);
+   // glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
+   // glScalef(scale, scale, scale);
     
-   glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
-      // Top face (y = 1.0f)
-      // Define vertices in counter-clockwise (CCW) order with normal pointing out
-      glColor3f(0.0f, 1.0f, 0.0f);     // Green
-           glVertex3f( 1.0f, 1.0f, -1.0f);
-           glVertex3f(-1.0f, 1.0f, -1.0f);
-           glVertex3f(-1.0f, 1.0f,  1.0f);
-           glVertex3f( 1.0f, 1.0f,  1.0f);
+   // glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
+   //    // Top face (y = 1.0f)
+   //    // Define vertices in counter-clockwise (CCW) order with normal pointing out
+   //    glColor3f(0.0f, 1.0f, 0.0f);     // Green
+   //         glVertex3f( 1.0f, 1.0f, -1.0f);
+   //         glVertex3f(-1.0f, 1.0f, -1.0f);
+   //         glVertex3f(-1.0f, 1.0f,  1.0f);
+   //         glVertex3f( 1.0f, 1.0f,  1.0f);
       
-           // Bottom face (y = -1.0f)
-           glColor3f(1.0f, 0.5f, 0.0f);     // Orange
-           glVertex3f( 1.0f, -1.0f,  1.0f);
-           glVertex3f(-1.0f, -1.0f,  1.0f);
-           glVertex3f(-1.0f, -1.0f, -1.0f);
-           glVertex3f( 1.0f, -1.0f, -1.0f);
+   //         // Bottom face (y = -1.0f)
+   //         glColor3f(1.0f, 0.5f, 0.0f);     // Orange
+   //         glVertex3f( 1.0f, -1.0f,  1.0f);
+   //         glVertex3f(-1.0f, -1.0f,  1.0f);
+   //         glVertex3f(-1.0f, -1.0f, -1.0f);
+   //         glVertex3f( 1.0f, -1.0f, -1.0f);
       
-           // Front face  (z = 1.0f)
-           glColor3f(1.0f, 0.0f, 0.0f);     // Red
-           glVertex3f( 1.0f,  1.0f, 1.0f);
-           glVertex3f(-1.0f,  1.0f, 1.0f);
-           glVertex3f(-1.0f, -1.0f, 1.0f);
-           glVertex3f( 1.0f, -1.0f, 1.0f);
+   //         // Front face  (z = 1.0f)
+   //         glColor3f(1.0f, 0.0f, 0.0f);     // Red
+   //         glVertex3f( 1.0f,  1.0f, 1.0f);
+   //         glVertex3f(-1.0f,  1.0f, 1.0f);
+   //         glVertex3f(-1.0f, -1.0f, 1.0f);
+   //         glVertex3f( 1.0f, -1.0f, 1.0f);
       
-           // Back face (z = -1.0f)
-           glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
-           glVertex3f( 1.0f, -1.0f, -1.0f);
-           glVertex3f(-1.0f, -1.0f, -1.0f);
-           glVertex3f(-1.0f,  1.0f, -1.0f);
-           glVertex3f( 1.0f,  1.0f, -1.0f);
+   //         // Back face (z = -1.0f)
+   //         glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
+   //         glVertex3f( 1.0f, -1.0f, -1.0f);
+   //         glVertex3f(-1.0f, -1.0f, -1.0f);
+   //         glVertex3f(-1.0f,  1.0f, -1.0f);
+   //         glVertex3f( 1.0f,  1.0f, -1.0f);
       
-           // Left face (x = -1.0f)
-           glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-           glVertex3f(-1.0f,  1.0f,  1.0f);
-           glVertex3f(-1.0f,  1.0f, -1.0f);
-           glVertex3f(-1.0f, -1.0f, -1.0f);
-           glVertex3f(-1.0f, -1.0f,  1.0f);
+   //         // Left face (x = -1.0f)
+   //         glColor3f(0.0f, 0.0f, 1.0f);     // Blue
+   //         glVertex3f(-1.0f,  1.0f,  1.0f);
+   //         glVertex3f(-1.0f,  1.0f, -1.0f);
+   //         glVertex3f(-1.0f, -1.0f, -1.0f);
+   //         glVertex3f(-1.0f, -1.0f,  1.0f);
       
-           // Right face (x = 1.0f)
-           glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
-           glVertex3f(1.0f,  1.0f, -1.0f);
-           glVertex3f(1.0f,  1.0f,  1.0f);
-           glVertex3f(1.0f, -1.0f,  1.0f);
-           glVertex3f(1.0f, -1.0f, -1.0f);
-        glEnd();  // End of drawing color-cube
+   //         // Right face (x = 1.0f)
+   //         glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
+   //         glVertex3f(1.0f,  1.0f, -1.0f);
+   //         glVertex3f(1.0f,  1.0f,  1.0f);
+   //         glVertex3f(1.0f, -1.0f,  1.0f);
+   //         glVertex3f(1.0f, -1.0f, -1.0f);
+   //      glEnd();  // End of drawing color-cube
     
 
 
-   glEnd();  // End of drawing color-cube
+   // glEnd();  // End of drawing color-cube
  
-   glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
+   // glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
  
    // Update the rotational angle after each refresh [NEW]
 //   anglePyramid += 0.2f;
@@ -131,6 +154,57 @@ void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integ
  
 /* Main function: GLUT runs as a console application starting at main() */
 int main(int argc, char** argv) {
+   
+   objl::Loader Loader;
+   bool loadout = Loader.LoadFile("LoPoly/Great Lakes Biplane.obj");
+   if (loadout) {
+      for (int i = 0; i < Loader.LoadedMeshes.size(); i++)
+		{
+			// Copy one of the loaded meshes to be our current mesh
+			objl::Mesh curMesh = Loader.LoadedMeshes[i];
+
+			// // Print Mesh Name
+			// file << "Mesh " << i << ": " << curMesh.MeshName << "\n";
+
+			// // Print Vertices
+			// file << "Vertices:\n";
+
+			// Go through each vertex and print its number,
+			//  position, normal, and texture coordinate
+			for (int j = 0; j < curMesh.Vertices.size(); j++){
+            vertices.push_back(curMesh.Vertices[j].Position.X);
+            vertices.push_back(curMesh.Vertices[j].Position.Y);
+            vertices.push_back(curMesh.Vertices[j].Position.Z);
+            textureCoords.push_back(curMesh.Vertices[j].TextureCoordinate.X);
+            textureCoords.push_back(curMesh.Vertices[j].TextureCoordinate.Y);
+            colors.push_back(0.0);
+            colors.push_back(0.0);
+            colors.push_back(0.0);
+            colors.push_back(0.0);
+				// file << "V" << j << ": " <<
+				// 	"P(" << curMesh.Vertices[j].Position.X << ", " << curMesh.Vertices[j].Position.Y << ", " << curMesh.Vertices[j].Position.Z << ") " <<
+				// 	"N(" << curMesh.Vertices[j].Normal.X << ", " << curMesh.Vertices[j].Normal.Y << ", " << curMesh.Vertices[j].Normal.Z << ") " <<
+				// 	"TC(" << curMesh.Vertices[j].TextureCoordinate.X << ", " << curMesh.Vertices[j].TextureCoordinate.Y << ")\n";
+			}
+
+      // for (int i = 0; i < iterator->second.size(); i += 3) {
+      //    int t0 = iterator->second[i + 0];
+      //    int t1 = iterator->second[i + 1];
+      //    int t2 = iterator->second[i + 2];
+      //    vertices.push_back(mesh.vertices[t0].x);
+      //    vertices.push_back(mesh.vertices[t0].y);
+      //    vertices.push_back(mesh.vertices[t0].z);
+      //    vertices.push_back(mesh.vertices[t1].x);
+      //    vertices.push_back(mesh.vertices[t1].y);
+      //    vertices.push_back(mesh.vertices[t1].z);
+      //    vertices.push_back(mesh.vertices[t2].x);
+      //    vertices.push_back(mesh.vertices[t2].y);
+      //    vertices.push_back(mesh.vertices[t2].z);
+
+      //    // [...] Same for colors and texture coords.
+      // }
+      }
+   }
    glutInit(&argc, argv);            // Initialize GLUT
    glutInitDisplayMode(GLUT_DOUBLE); // Enable double buffered mode
    glutInitWindowSize(640, 480);   // Set the window's initial width & height
