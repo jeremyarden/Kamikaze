@@ -2,14 +2,49 @@
  * OGL02Animation.cpp: 3D Shapes with animation
  */
 // for MS Windows
-#include <GLUT/GLUT.h>  // GLUT, include glu.h and gl.h
- 
+// #include <GLUT/GLUT.h>  // GLUT, include glu.h and gl.h
+// for GNU/Linux
+#include <GL/gl.h>
+#include <GL/glut.h>
+
+#include <iostream>
+using namespace std;
+
+/*Constants*/
+GLfloat initAnglePyramid = 0.5f;  // Rotational angle for pyramid [NEW]
+GLfloat initAngleCubeX = 0.0f;     // Rotational angle for cube [NEW]
+GLfloat initAngleCubeY = 0.0f;
+GLfloat initAngleCubeZ = 0.0f;
+
+GLfloat initScale = 1.0f;
+
+GLfloat initCameraX = 0.0f;
+GLfloat initCameraY = 0.0f;
+GLfloat initCameraZ = 5.0f;
+
+GLfloat initUpVectorX = 0.0f;
+GLfloat initUpVectorY = 1.0f;
+GLfloat initUpVectorZ = 0.0f;
+
+
+
 /* Global variables */
-char title[] = "KAMIKAZE PLANE";
-GLfloat angleCubeX = 0.0f;
-GLfloat angleCubeY = 0.0f;
-GLfloat angleCubeZ = 0.0f;
-GLfloat scale = 1.0f;
+char title[] = "3D Shapes with animation";
+GLfloat anglePyramid = initAnglePyramid;  // Rotational angle for pyramid [NEW]
+GLfloat angleCubeX = initAngleCubeX;     // Rotational angle for cube [NEW]
+GLfloat angleCubeY = initAngleCubeY;
+GLfloat angleCubeZ = initAngleCubeZ;
+
+GLfloat scale = initScale;
+
+GLfloat cameraX = initCameraX;
+GLfloat cameraY = initCameraY;
+GLfloat cameraZ = initCameraZ;
+
+GLfloat upVectorX = initUpVectorX;
+GLfloat upVectorY = initUpVectorY;
+GLfloat upVectorZ = initUpVectorZ;
+
 int refreshMills = 15;
  
 /* Initialize OpenGL Graphics */
@@ -35,8 +70,14 @@ void display() {
    glRotatef(angleCubeY, 0.0f, 1.0f, 0.0f);
    glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
    glScalef(scale, scale, scale);
-    
-   glBegin(GL_QUADS);                // Begin drawing the color cube with 6 quads
+   gluLookAt(cameraX, cameraY, cameraZ, 0.0f, 0.0f, -7.0f,  upVectorX, upVectorY, upVectorZ);
+   
+   cout << "cameraX " << cameraX << endl;
+   cout << "cameraY " << cameraY << endl;
+   cout << "upVectorZ " << upVectorZ << endl;
+
+
+   glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
       // Top face (y = 1.0f)
       // Define vertices in counter-clockwise (CCW) order with normal pointing out
       glColor3f(0.0f, 1.0f, 0.0f);     // Green
@@ -44,7 +85,6 @@ void display() {
            glVertex3f(-1.0f, 1.0f, -1.0f);
            glVertex3f(-1.0f, 1.0f,  1.0f);
            glVertex3f( 1.0f, 1.0f,  1.0f);
-      
            // Bottom face (y = -1.0f)
            glColor3f(1.0f, 0.5f, 0.0f);     // Orange
            glVertex3f( 1.0f, -1.0f,  1.0f);
@@ -81,11 +121,96 @@ void display() {
            glVertex3f(1.0f, -1.0f, -1.0f);
         glEnd();  // End of drawing color-cube
 
+   glEnd();  // End of drawing color-cube
+
+   glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
+      // Top face (y = 1.0f)
+      // Define vertices in counter-clockwise (CCW) order with normal pointing out
+      glColor3f(0.0f, 1.0f, 0.0f);     // Green
+           glVertex3f( 4.0f, 1.0f, -1.0f);
+           glVertex3f(2.0f, 1.0f, -1.0f);
+           glVertex3f(2.0f, 1.0f,  1.0f);
+           glVertex3f( 4.0f, 1.0f,  1.0f);
+      
+           // Bottom face (y = -1.0f)
+           glColor3f(1.0f, 0.5f, 0.0f);     // Orange
+           glVertex3f( 4.0f, -1.0f,  1.0f);
+           glVertex3f(2.0f, -1.0f,  1.0f);
+           glVertex3f(2.0f, -1.0f, -1.0f);
+           glVertex3f( 4.0f, -1.0f, -1.0f);
+      
+           // Front face  (z = 1.0f)
+           glColor3f(1.0f, 0.0f, 0.0f);     // Red
+           glVertex3f( 4.0f,  1.0f, 1.0f);
+           glVertex3f(2.0f,  1.0f, 1.0f);
+           glVertex3f(2.0f, -1.0f, 1.0f);
+           glVertex3f( 4.0f, -1.0f, 1.0f);
+      
+           // Back face (z = -1.0f)
+           glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
+           glVertex3f( 4.0f, -1.0f, -1.0f);
+           glVertex3f(2.0f, -1.0f, -1.0f);
+           glVertex3f(2.0f,  1.0f, -1.0f);
+           glVertex3f( 4.0f,  1.0f, -1.0f);
+      
+           // Left face (x = -1.0f)
+           glColor3f(0.0f, 0.0f, 1.0f);     // Blue
+           glVertex3f(2.0f,  1.0f,  1.0f);
+           glVertex3f(2.0f,  1.0f, -1.0f);
+           glVertex3f(2.0f, -1.0f, -1.0f);
+           glVertex3f(2.0f, -1.0f,  1.0f);
+      
+           // Right face (x = 1.0f)
+           glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
+           glVertex3f(4.0f,  1.0f, -1.0f);
+           glVertex3f(4.0f,  1.0f,  1.0f);
+           glVertex3f(4.0f, -1.0f,  1.0f);
+           glVertex3f(4.0f, -1.0f, -1.0f);
+        glEnd();  // End of drawing color-cube
+    
+
+
+   glEnd();  // End of drawing color-cube
+ 
+ 
    glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
  
    // Update the rotational angle after each refresh [NEW]
 //   anglePyramid += 0.2f;
 //   angleCube -= 0.15f;
+}
+
+float *cross(float x, float y, float z) {
+	float *result = new float[3];
+
+	float *up = new float[3];
+
+	up[0] = 0.0f;
+	up[1] = 1.0f;
+	up[2] = 0.0f;
+
+
+	result[0] = y * up[2] - z * up[1]; 
+    result[1] = z * up[0] - x * up[2]; 
+    result[2] = x * up[1] - y * up[0]; 
+
+
+	return result;
+
+}
+
+void reset() {
+	anglePyramid = initAnglePyramid;  // Rotational angle for pyramid [NEW]
+	angleCubeX = initAngleCubeX;     // Rotational angle for cube [NEW]
+	angleCubeY = initAngleCubeY;
+	angleCubeZ = initAngleCubeZ;
+
+	scale = initScale;
+
+	cameraX = initCameraX;
+	cameraY = initCameraY;
+	cameraZ = initCameraZ;
+
 }
 
 void keyboard(unsigned char key, int x, int y){
@@ -96,11 +221,29 @@ void keyboard(unsigned char key, int x, int y){
         case 's': case 'S': angleCubeX -= 2.5f;  glutPostRedisplay(); break;
         case 'q': case 'Q': angleCubeZ += 2.5f;  glutPostRedisplay(); break;
         case 'e': case 'E': angleCubeZ -= 2.5f;  glutPostRedisplay(); break;
+        case 'r': case 'R': reset();  glutPostRedisplay(); break;
         case '+': case '=': scale += 0.05f;  glutPostRedisplay(); break;
         case '-': scale -= 0.05f;  glutPostRedisplay(); break;
+        
     }
 }
+
+void arrow(int key, int x, int y) {
+	float *newUp;
+	switch(key) {
+		case GLUT_KEY_LEFT: cameraX -= 0.2f;glutPostRedisplay(); break;
+        case GLUT_KEY_RIGHT: cameraX += 0.2f;  glutPostRedisplay(); break;
+        case GLUT_KEY_DOWN: cameraY -= 0.2f;  glutPostRedisplay(); break;
+        case GLUT_KEY_UP: cameraY += 0.2f;  glutPostRedisplay(); break;
+	}
+
+	newUp = cross(cameraX, cameraY, cameraZ);
+	upVectorX = newUp[0];
+	// upVectorY = newUp[1];
+	// upVectorZ = newUp[2];
+}
  
+
 /* Called back when timer expired [NEW] */
 void timer(int value) {
    glutPostRedisplay();      // Post re-paint request to activate display()
@@ -126,6 +269,11 @@ void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integ
  
 /* Main function: GLUT runs as a console application starting at main() */
 int main(int argc, char** argv) {
+
+	float *test = cross(cameraX, cameraY, cameraZ);
+
+	cout << test[0] << " " << test[1] << " " << test[2] << endl;
+
    glutInit(&argc, argv);            // Initialize GLUT
    glutInitDisplayMode(GLUT_DOUBLE); // Enable double buffered mode
    glutInitWindowSize(640, 480);   // Set the window's initial width & height
@@ -134,8 +282,10 @@ int main(int argc, char** argv) {
    glutDisplayFunc(display);       // Register callback handler for window re-paint event
    
    glutReshapeFunc(reshape);       // Register callback handler for window re-size event
+
    initGL();
     glutKeyboardFunc(keyboard);// Our own OpenGL initialization
+    glutSpecialFunc(arrow);
    //glutTimerFunc(0, timer, 0);     // First timer call immediately [NEW]
    glutMainLoop();                 // Enter the infinite event-processing loop
    return 0;
