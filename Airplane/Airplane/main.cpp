@@ -10,6 +10,7 @@ GLfloat anglePyramid = 0.5f;  // Rotational angle for pyramid [NEW]
 GLfloat angleCubeX = 0.0f;     // Rotational angle for cube [NEW]
 GLfloat angleCubeY = 0.0f;
 GLfloat angleCubeZ = 0.0f;
+GLfloat scale = 1.0f;
 int refreshMills = 15;
  
 /* Initialize OpenGL Graphics */
@@ -34,6 +35,7 @@ void display() {
    glRotatef(angleCubeX, 1.0f, 0.0f, 0.0f);  // Rotate about (1,1,1)-axis [NEW]
    glRotatef(angleCubeY, 0.0f, 1.0f, 0.0f);
    glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
+   glScalef(scale, scale, scale);
     
    glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
       // Top face (y = 1.0f)
@@ -99,6 +101,8 @@ void keyboard(unsigned char key, int x, int y){
         case 's': case 'S': angleCubeX -= 2.5f;  glutPostRedisplay(); break;
         case 'q': case 'Q': angleCubeZ += 2.5f;  glutPostRedisplay(); break;
         case 'e': case 'E': angleCubeZ -= 2.5f;  glutPostRedisplay(); break;
+        case '+': case '=': scale += 0.05f;  glutPostRedisplay(); break;
+        case '-': scale -= 0.05f;  glutPostRedisplay(); break;
     }
 }
  
