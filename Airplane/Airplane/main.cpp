@@ -86,7 +86,7 @@ void display() {
    glRotatef(angleCubeY, 0.0f, 1.0f, 0.0f);
    glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
    glScalef(scale, scale, scale);
-   gluLookAt(cameraX, cameraY, cameraZ, pickX, pickY, pickZ,  upVectorX, upVectorY, upVectorZ);
+   gluLookAt(cameraX, cameraY, cameraZ, cameraX+pickX, cameraY+pickY, cameraZ+pickZ,  upVectorX, upVectorY, upVectorZ);
    
    cout << "cameraX " << cameraX << endl;
    cout << "cameraY " << cameraY << endl;
@@ -143,56 +143,7 @@ void display() {
 
    glEnd();  // End of drawing color-cube
 
-   glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
-      // Top face (y = 1.0f)
-      // Define vertices in counter-clockwise (CCW) order with normal pointing out
-      glColor3f(0.0f, 1.0f, 0.0f);     // Green
-           glVertex3f( 4.0f, 1.0f, -1.0f);
-           glVertex3f(2.0f, 1.0f, -1.0f);
-           glVertex3f(2.0f, 1.0f,  1.0f);
-           glVertex3f( 4.0f, 1.0f,  1.0f);
-      
-           // Bottom face (y = -1.0f)
-           glColor3f(1.0f, 0.5f, 0.0f);     // Orange
-           glVertex3f( 4.0f, -1.0f,  1.0f);
-           glVertex3f(2.0f, -1.0f,  1.0f);
-           glVertex3f(2.0f, -1.0f, -1.0f);
-           glVertex3f( 4.0f, -1.0f, -1.0f);
-      
-           // Front face  (z = 1.0f)
-           glColor3f(1.0f, 0.0f, 0.0f);     // Red
-           glVertex3f( 4.0f,  1.0f, 1.0f);
-           glVertex3f(2.0f,  1.0f, 1.0f);
-           glVertex3f(2.0f, -1.0f, 1.0f);
-           glVertex3f( 4.0f, -1.0f, 1.0f);
-      
-           // Back face (z = -1.0f)
-           glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
-           glVertex3f( 4.0f, -1.0f, -1.0f);
-           glVertex3f(2.0f, -1.0f, -1.0f);
-           glVertex3f(2.0f,  1.0f, -1.0f);
-           glVertex3f( 4.0f,  1.0f, -1.0f);
-      
-           // Left face (x = -1.0f)
-           glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-           glVertex3f(2.0f,  1.0f,  1.0f);
-           glVertex3f(2.0f,  1.0f, -1.0f);
-           glVertex3f(2.0f, -1.0f, -1.0f);
-           glVertex3f(2.0f, -1.0f,  1.0f);
-      
-           // Right face (x = 1.0f)
-           glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
-           glVertex3f(4.0f,  1.0f, -1.0f);
-           glVertex3f(4.0f,  1.0f,  1.0f);
-           glVertex3f(4.0f, -1.0f,  1.0f);
-           glVertex3f(4.0f, -1.0f, -1.0f);
-        glEnd();  // End of drawing color-cube
-    
-
-
-   glEnd();  // End of drawing color-cube
- 
- 
+   
    glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
  
    // Update the rotational angle after each refresh [NEW]
@@ -254,25 +205,26 @@ void keyboard(unsigned char key, int x, int y){
 void arrow(int key, int x, int y) {
 	float *newUp;
 	switch(key) {
-		case GLUT_KEY_LEFT: theta -= 0.01f; glutPostRedisplay(); break;
-        case GLUT_KEY_RIGHT: theta += 0.01f;  glutPostRedisplay(); break;
-        case GLUT_KEY_DOWN: cameraY -= 0.01f;  glutPostRedisplay(); break;
-        case GLUT_KEY_UP: cameraY += 0.01f;  glutPostRedisplay(); break;
+		case GLUT_KEY_LEFT: theta -= 0.1f; glutPostRedisplay(); break;
+        case GLUT_KEY_RIGHT: theta += 0.1f;  glutPostRedisplay(); break;
+        case GLUT_KEY_DOWN: cameraY -= 0.1f;  glutPostRedisplay(); break;
+        case GLUT_KEY_UP: cameraY += 0.1f;  glutPostRedisplay(); break;
 	}
 
-	float dx = cameraX - pickX;
-	float dy = cameraY - pickY;
-	float dz = cameraZ - pickZ;
+	// float dx = cameraX - pickX;
+	// float dy = cameraY - pickY;
+	// float dz = cameraZ - pickZ;
 
-	float radius = sqrt(dx*dx + dy*dy + dz*dz);
+	float radius = sqrt(cameraY*cameraX + cameraY*cameraY + cameraZ*cameraZ);
 	cout << "radius " << radius << endl;
 	cameraX = radius*cos(theta)*sin(theta);
 	cameraY = radius*sin(phi)*sin(theta);
 	cameraZ = radius*cos(theta);
 
-	pickX += cameraX;
-	pickY += cameraY;
-	pickZ += cameraZ;
+	pickX = -cos(theta);
+	// pickY = sin(phi)*sin(theta);
+	pickY = 0;
+	pickZ = -sin(theta);
 }
  
 
