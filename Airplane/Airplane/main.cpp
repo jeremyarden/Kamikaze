@@ -105,7 +105,6 @@ void display() {
            glVertex3f(-1.0f, 1.0f, -1.0f);
            glVertex3f(-1.0f, 1.0f,  1.0f);
            glVertex3f( 1.0f, 1.0f,  1.0f);
-      
            // Bottom face (y = -1.0f)
            glColor3f(1.0f, 0.5f, 0.0f);     // Orange
            glVertex3f( 1.0f, -1.0f,  1.0f);
@@ -141,8 +140,6 @@ void display() {
            glVertex3f(1.0f, -1.0f,  1.0f);
            glVertex3f(1.0f, -1.0f, -1.0f);
         glEnd();  // End of drawing color-cube
-    
-
 
    glEnd();  // End of drawing color-cube
 
