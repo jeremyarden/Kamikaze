@@ -7,6 +7,8 @@
 #include <GL/gl.h>
 #include <GL/glut.h>
 
+#include <math.h>
+
 #include <iostream>
 using namespace std;
 
@@ -16,16 +18,23 @@ GLfloat initAngleCubeX = 0.0f;     // Rotational angle for cube [NEW]
 GLfloat initAngleCubeY = 0.0f;
 GLfloat initAngleCubeZ = 0.0f;
 
+
 GLfloat initScale = 1.0f;
 
 GLfloat initCameraX = 0.0f;
 GLfloat initCameraY = 0.0f;
 GLfloat initCameraZ = 5.0f;
 
+GLfloat initPickX = 0.0f;
+GLfloat initPickY = 0.0f;
+GLfloat initPickZ = -7.0f;
+
 GLfloat initUpVectorX = 0.0f;
 GLfloat initUpVectorY = 1.0f;
 GLfloat initUpVectorZ = 0.0f;
 
+GLfloat initTheta = 0.0f;
+GLfloat initPhi = 0.0f;
 
 
 /* Global variables */
@@ -41,9 +50,16 @@ GLfloat cameraX = initCameraX;
 GLfloat cameraY = initCameraY;
 GLfloat cameraZ = initCameraZ;
 
+GLfloat pickX = initPickX;
+GLfloat pickY = initPickY;
+GLfloat pickZ = initPickZ;
+
 GLfloat upVectorX = initUpVectorX;
 GLfloat upVectorY = initUpVectorY;
 GLfloat upVectorZ = initUpVectorZ;
+
+GLfloat theta = initTheta;
+GLfloat phi = initPhi;
 
 int refreshMills = 15;
  
@@ -70,15 +86,15 @@ void display() {
    glRotatef(angleCubeY, 0.0f, 1.0f, 0.0f);
    glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
    glScalef(scale, scale, scale);
-   gluLookAt(cameraX, cameraY, cameraZ, 0.0f, 0.0f, -7.0f,  upVectorX, upVectorY, upVectorZ);
+   gluLookAt(cameraX, cameraY, cameraZ, pickX, pickY, pickZ,  upVectorX, upVectorY, upVectorZ);
    
    cout << "cameraX " << cameraX << endl;
    cout << "cameraY " << cameraY << endl;
    cout << "cameraZ " << cameraZ << endl;
 
-   cout << "upVectorX " << upVectorX << endl;
-   cout << "upVectorY " << upVectorY << endl;
-   cout << "upVectorZ " << upVectorZ << endl;
+   // cout << "upVectorX " << upVectorX << endl;
+   // cout << "upVectorY " << upVectorY << endl;
+   // cout << "upVectorZ " << upVectorZ << endl;
 
 
    glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
@@ -218,6 +234,9 @@ void reset() {
 	cameraY = initCameraY;
 	cameraZ = initCameraZ;
 
+	phi = initPhi;
+	theta = initTheta;
+
 }
 
 void keyboard(unsigned char key, int x, int y){
@@ -238,16 +257,25 @@ void keyboard(unsigned char key, int x, int y){
 void arrow(int key, int x, int y) {
 	float *newUp;
 	switch(key) {
-		case GLUT_KEY_LEFT: cameraX -= 0.2f;glutPostRedisplay(); break;
-        case GLUT_KEY_RIGHT: cameraX += 0.2f;  glutPostRedisplay(); break;
-        case GLUT_KEY_DOWN: cameraY -= 0.2f;  glutPostRedisplay(); break;
-        case GLUT_KEY_UP: cameraY += 0.2f;  glutPostRedisplay(); break;
+		case GLUT_KEY_LEFT: theta -= 0.01f; glutPostRedisplay(); break;
+        case GLUT_KEY_RIGHT: theta += 0.01f;  glutPostRedisplay(); break;
+        case GLUT_KEY_DOWN: cameraY -= 0.01f;  glutPostRedisplay(); break;
+        case GLUT_KEY_UP: cameraY += 0.01f;  glutPostRedisplay(); break;
 	}
 
-	newUp = cross(cameraX, cameraY, cameraZ);
-	upVectorX = newUp[0];
-	// upVectorY = newUp[1];
-	// upVectorZ = newUp[2];
+	float dx = cameraX - pickX;
+	float dy = cameraY - pickY;
+	float dz = cameraZ - pickZ;
+
+	float radius = sqrt(dx*dx + dy*dy + dz*dz);
+	cout << "radius " << radius << endl;
+	cameraX = radius*cos(theta)*sin(theta);
+	cameraY = radius*sin(phi)*sin(theta);
+	cameraZ = radius*cos(theta);
+
+	pickX += cameraX;
+	pickY += cameraY;
+	pickZ += cameraZ;
 }
  
 
@@ -277,9 +305,6 @@ void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integ
 /* Main function: GLUT runs as a console application starting at main() */
 int main(int argc, char** argv) {
 
-	float *test = cross(cameraX, cameraY, cameraZ);
-
-	cout << test[0] << " " << test[1] << " " << test[2] << endl;
 
    glutInit(&argc, argv);            // Initialize GLUT
    glutInitDisplayMode(GLUT_DOUBLE); // Enable double buffered mode
