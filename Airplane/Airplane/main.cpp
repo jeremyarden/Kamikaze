@@ -7,11 +7,10 @@
 /* Global variables */
 char title[] = "3D Shapes with animation";
 GLfloat anglePyramid = 0.5f;  // Rotational angle for pyramid [NEW]
-GLfloat angleCube = 0.0f;     // Rotational angle for cube [NEW]
+GLfloat angleCubeX = 0.0f;     // Rotational angle for cube [NEW]
+GLfloat angleCubeY = 0.0f;
+GLfloat angleCubeZ = 0.0f;
 int refreshMills = 15;
-GLfloat modelX = 1.0f;
-GLfloat modelY = 1.0f;
-GLfloat modelZ = 1.0f;
  
 /* Initialize OpenGL Graphics */
 void initGL() {
@@ -32,8 +31,10 @@ void display() {
    // Render a color-cube consisting of 6 quads with different colors
    glLoadIdentity();                 // Reset the model-view matrix
    glTranslatef(0.0f, 0.0f, -7.0f);  // Move right and into the screen
-   glRotatef(angleCube, modelX, modelY, modelZ);  // Rotate about (1,1,1)-axis [NEW]
- 
+   glRotatef(angleCubeX, 1.0f, 0.0f, 0.0f);  // Rotate about (1,1,1)-axis [NEW]
+   glRotatef(angleCubeY, 0.0f, 1.0f, 0.0f);
+   glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
+    
    glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
       // Top face (y = 1.0f)
       // Define vertices in counter-clockwise (CCW) order with normal pointing out
@@ -92,12 +93,12 @@ void display() {
 
 void keyboard(unsigned char key, int x, int y){
     switch(key) {
-        case 'q': case 'Q':  modelX = 0.0f; modelY = 0.0f; angleCube += 2.5f;  glutPostRedisplay(); break;
-        case 'e': case 'E':  modelX = 0.0f; modelY = 0.0f; angleCube -= 2.5f;  glutPostRedisplay(); break;
-        case 'a': case 'A': modelX = 0.0f; modelZ = 0.0f; angleCube += 2.5f;  glutPostRedisplay(); break;
-        case 'd': case 'D': modelX = 0.0f; modelZ = 0.0f; angleCube -= 2.5f;  glutPostRedisplay(); break;
-        case 'w': case 'W': modelY = 0.0f; modelZ = 0.0f; angleCube += 2.5f;  glutPostRedisplay(); break;
-        case 's': case 'S': modelY = 0.0f; modelZ = 0.0f; angleCube -= 2.5f;  glutPostRedisplay(); break;
+        case 'a': case 'A': angleCubeY += 2.5f;  glutPostRedisplay(); break;
+        case 'd': case 'D': angleCubeY -= 2.5f;  glutPostRedisplay(); break;
+        case 'w': case 'W': angleCubeX += 2.5f;  glutPostRedisplay(); break;
+        case 's': case 'S': angleCubeX -= 2.5f;  glutPostRedisplay(); break;
+        case 'q': case 'Q': angleCubeZ += 2.5f;  glutPostRedisplay(); break;
+        case 'e': case 'E': angleCubeZ -= 2.5f;  glutPostRedisplay(); break;
     }
 }
  
