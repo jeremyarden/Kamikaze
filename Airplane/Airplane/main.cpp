@@ -1,21 +1,9 @@
-/*
- *
- * Demonstrates how to load and display an Wavefront OBJ file.
- * Using triangles and normals as static object. No texture mapping.
- *
- * OBJ files must be triangulated!!!
- * Non triangulated objects wont work!
- * You can use Blender to triangulate
- *
- */
 
 #include <windows.h>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
 #include <string.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <GL/glut.h>
 #include <iostream>
 #include <sstream>
@@ -362,6 +350,42 @@ void reset() {
 	phi = initPhi;
 	theta = initTheta;
 
+int refreshMills = 15;
+ 
+float *cross(float x, float y, float z) {
+	float *result = new float[3];
+
+	float *up = new float[3];
+
+	up[0] = 0.0f;
+	up[1] = 1.0f;
+	up[2] = 0.0f;
+
+
+	result[0] = y * up[2] - z * up[1]; 
+    result[1] = z * up[0] - x * up[2]; 
+    result[2] = x * up[1] - y * up[0]; 
+
+
+	return result;
+
+}
+
+void reset() {
+	anglePyramid = initAnglePyramid;  // Rotational angle for pyramid [NEW]
+	angleCubeX = initAngleCubeX;     // Rotational angle for cube [NEW]
+	angleCubeY = initAngleCubeY;
+	angleCubeZ = initAngleCubeZ;
+
+	scale = initScale;
+
+	cameraX = initCameraX;
+	cameraY = initCameraY;
+	cameraZ = initCameraZ;
+
+	phi = initPhi;
+	theta = initTheta;
+
 }
 
 void keyboard(unsigned char key, int x, int y){
@@ -379,6 +403,54 @@ void keyboard(unsigned char key, int x, int y){
     }
 }
 
+void arrow(int key, int x, int y) {
+	float *newUp;
+	switch(key) {
+		case GLUT_KEY_LEFT: theta -= 0.1f; glutPostRedisplay(); break;
+        case GLUT_KEY_RIGHT: theta += 0.1f;  glutPostRedisplay(); break;
+        case GLUT_KEY_DOWN: cameraY -= 0.1f;  glutPostRedisplay(); break;
+        case GLUT_KEY_UP: cameraY += 0.1f;  glutPostRedisplay(); break;
+	}
+
+	// float dx = cameraX - pickX;
+	// float dy = cameraY - pickY;
+	// float dz = cameraZ - pickZ;
+
+	float radius = sqrt(cameraY*cameraX + cameraY*cameraY + cameraZ*cameraZ);
+	cout << "radius " << radius << endl;
+	cameraX = radius*cos(theta)*sin(theta);
+	cameraY = radius*sin(phi)*sin(theta);
+	cameraZ = radius*cos(theta);
+
+	pickX = -cos(theta);
+	// pickY = sin(phi)*sin(theta);
+	pickY = 0;
+	pickZ = -sin(theta);
+}
+ 
+
+/* Called back when timer expired [NEW] */
+void timer(int value) {
+   glutPostRedisplay();      // Post re-paint request to activate display()
+   glutTimerFunc(refreshMills, timer, 0); // next timer call milliseconds later
+}
+ 
+/* Handler for window re-size event. Called back when the window first appears and
+   whenever the window is re-sized with its new width and height */
+void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integer
+   // Compute aspect ratio of the new window
+   if (height == 0) height = 1;                // To prevent divide by 0
+   GLfloat aspect = (GLfloat)width / (GLfloat)height;
+ 
+   // Set the viewport to cover the new window
+   glViewport(0, 0, width, height);
+ 
+   // Set the aspect ratio of the clipping volume to match the viewport
+   glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
+   glLoadIdentity();             // Reset
+   // Enable perspective projection with fovy, aspect, zNear and zFar
+   gluPerspective(45.0f, aspect, 0.1f, 100.0f);
+}
 
 int main(int argc, char **argv)
 {
@@ -397,7 +469,9 @@ int main(int argc, char **argv)
 	glutCreateWindow(win.title);								// create Window
 	glutDisplayFunc(display);									// register Display Function
 	glutIdleFunc( display );									// register Idle Function
-    glutKeyboardFunc( keyboard );								// register Keyboard Handler
+	glutReshapeFunc(reshape);       // Register callback handler for window re-size event
+    glutKeyboardFunc( keyboard );
+	glutSpecialFunc(arrow);								// register Keyboard Handler
 	initialize();
 	//D:/Juro/Tugas-Tugas/KULIAH/GRAFKOM/CobaOBJ/atena.obj
 	obj.Load("C:/Users/Yanichi/Documents/untitled.obj");
