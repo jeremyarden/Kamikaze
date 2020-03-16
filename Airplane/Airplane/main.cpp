@@ -133,7 +133,6 @@ void Model_OBJ::calculateNormal( float *coord1, float *coord2, float *coord3 ,fl
 	norm[0] = vr[0]/val;
 	norm[1] = vr[1]/val;
 	norm[2] = vr[2]/val;
-    cout<<"anjing2"<<norm;
 
 }
 
@@ -394,6 +393,7 @@ void keyboard(unsigned char key, int x, int y){
         case 'r': case 'R': reset();  glutPostRedisplay(); break;
         case '+': case '=': scale += 0.05f;  glutPostRedisplay(); break;
         case '-': scale -= 0.05f;  glutPostRedisplay(); break;
+        case 'h': case 'H' : cout<< "Selamat datang di menu Help\n1. Rotate object sumbu z counter-clockwise: Q / q\n2. Rotate object sumbu y clockwise: D / d\n3. Rotate object sumbu y counter-clockwise: A / a\n4. Rotate object sumbu x counter-clockwise: S / s\n5. Rotate object sumbu x clockwise: W / w\n6. Rotate object sumbu z clockwise: E / e\n7. Rotate Camera terhadap sumbu Y CCW: Arrow up\n8. Rotate Camera terhadap sumbu Y CW: Arrow down\n9. Rotate Camera terhadap sumbu X CCW: Arrow left\n10. Rotate Camera terhadap sumbu X CW: Arrow right\n11. Reset : r / R"; break;
 
     }
 }
@@ -412,7 +412,6 @@ void arrow(int key, int x, int y) {
 	// float dz = cameraZ - pickZ;
 
 	float radius = sqrt(cameraY*cameraX + cameraY*cameraY + cameraZ*cameraZ);
-	cout << "radius " << radius << endl;
 	cameraX = radius*cos(theta)*sin(theta);
 	cameraY = radius*sin(phi)*sin(theta);
 	cameraZ = radius*cos(theta);
