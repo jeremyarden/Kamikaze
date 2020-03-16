@@ -1,119 +1,367 @@
 /*
- * OGL02Animation.cpp: 3D Shapes with animation
+ *
+ * Demonstrates how to load and display an Wavefront OBJ file.
+ * Using triangles and normals as static object. No texture mapping.
+ *
+ * OBJ files must be triangulated!!!
+ * Non triangulated objects wont work!
+ * You can use Blender to triangulate
+ *
  */
-// for MS Windows
-#include <GL/glut.h>  // GLUT, include glu.h and gl.h
-#include "OBJ_Loader.h"
- 
+
+#include <windows.h>
+#include <iostream>
+#include <fstream>
+#include <stdio.h>
+#include <string.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <cmath>
+
+#define KEY_ESCAPE 27
+
+using namespace std;
+
+/************************************************************************
+  Window
+ ************************************************************************/
+
+typedef struct {
+    int width;
+	int height;
+	char* title;
+
+	float field_of_view_angle;
+	float z_near;
+	float z_far;
+} glutWindow;
+
+/*Constants*/
+GLfloat initAnglePyramid = 0.5f;  // Rotational angle for pyramid [NEW]
+GLfloat initAngleCubeX = 0.0f;     // Rotational angle for cube [NEW]
+GLfloat initAngleCubeY = 0.0f;
+GLfloat initAngleCubeZ = 0.0f;
+GLfloat initScale = 1.0f;
+
+GLfloat initCameraX = 0.0f;
+GLfloat initCameraY = 0.0f;
+GLfloat initCameraZ = 5.0f;
+
+GLfloat initPickX = 0.0f;
+GLfloat initPickY = 0.0f;
+GLfloat initPickZ = -7.0f;
+
+GLfloat initUpVectorX = 0.0f;
+GLfloat initUpVectorY = 1.0f;
+GLfloat initUpVectorZ = 0.0f;
+
+GLfloat initTheta = 0.0f;
+GLfloat initPhi = 0.0f;
+
+
 /* Global variables */
 char title[] = "3D Shapes with animation";
-GLfloat anglePyramid = 0.5f;  // Rotational angle for pyramid [NEW]
-GLfloat angleCubeX = 0.0f;     // Rotational angle for cube [NEW]
-GLfloat angleCubeY = 0.0f;
-GLfloat angleCubeZ = 0.0f;
-GLfloat scale = 1.0f;
-int refreshMills = 15;
-std::vector<float> vertices;
-std::vector<float> colors;
-std::vector<float> textureCoords;
- 
-/* Initialize OpenGL Graphics */
-void initGL() {
-   glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color to black and opaque
-   glClearDepth(1.0f);                   // Set background depth to farthest
-   glEnable(GL_DEPTH_TEST);   // Enable depth testing for z-culling
-   glDepthFunc(GL_LEQUAL);    // Set the type of depth-test
-   glShadeModel(GL_SMOOTH);   // Enable smooth shading
-   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // Nice perspective corrections
+GLfloat anglePyramid = initAnglePyramid;  // Rotational angle for pyramid [NEW]
+GLfloat angleCubeX = initAngleCubeX;     // Rotational angle for cube [NEW]
+GLfloat angleCubeY = initAngleCubeY;
+GLfloat angleCubeZ = initAngleCubeZ;
+
+GLfloat scale = initScale;
+
+GLfloat cameraX = initCameraX;
+GLfloat cameraY = initCameraY;
+GLfloat cameraZ = initCameraZ;
+
+GLfloat pickX = initPickX;
+GLfloat pickY = initPickY;
+GLfloat pickZ = initPickZ;
+
+GLfloat upVectorX = initUpVectorX;
+GLfloat upVectorY = initUpVectorY;
+GLfloat upVectorZ = initUpVectorZ;
+
+GLfloat theta = initTheta;
+GLfloat phi = initPhi;
+
+
+/***************************************************************************
+  OBJ Loading
+ ***************************************************************************/
+
+class Model_OBJ
+{
+  public:
+	Model_OBJ();
+    void calculateNormal(float* coord1,float* coord2,float* coord3, float* norm );
+    int Load(char *filename);	// Loads the model
+	void Draw();					// Draws the model on the screen
+	void Release();				// Release the model
+
+	float* normals;							// Stores the normals
+    float* Faces_Triangles;					// Stores the triangles
+	float* vertexBuffer;					// Stores the points which make the object
+	long TotalConnectedPoints;				// Stores the total number of connected verteces
+	long TotalConnectedTriangles;			// Stores the total number of connected triangles
+
+};
+
+
+#define POINTS_PER_VERTEX 3
+#define TOTAL_FLOATS_IN_TRIANGLE 9
+using namespace std;
+
+Model_OBJ::Model_OBJ()
+{
+	this->TotalConnectedTriangles = 0;
+	this->TotalConnectedPoints = 0;
 }
- 
-/* Handler for window-repaint event. Called back when the window first appears and
-   whenever the window needs to be re-painted. */
-void display() {
-  
-   // Enable everything you need
-   glEnableClientState(GL_VERTEX_ARRAY);
-   glEnableClientState(GL_COLOR_ARRAY);
-   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-   // Set your used arrays
-   glVertexPointer(3, GL_FLOAT, 0, vertices.data());
-   glColorPointer(4, GL_FLOAT, 0, colors.data());
-   glTexCoordPointer(2, GL_FLOAT, 0, textureCoords.data());
+void Model_OBJ::calculateNormal( float *coord1, float *coord2, float *coord3 ,float* norm)
+{
+   /* calculate Vector1 and Vector2 */
+   float va[3], vb[3], vr[3], val;
+   va[0] = coord1[0] - coord2[0];
+   va[1] = coord1[1] - coord2[1];
+   va[2] = coord1[2] - coord2[2];
 
-   // Draw your mesh
-   glDrawArrays(GL_TRIANGLES, 0, vertices.size()/3); // 'size' is the number of your vertices.
+   vb[0] = coord1[0] - coord3[0];
+   vb[1] = coord1[1] - coord3[1];
+   vb[2] = coord1[2] - coord3[2];
 
-   // Reset initial state
-   glDisableClientState(GL_VERTEX_ARRAY);
-   glDisableClientState(GL_COLOR_ARRAY);
-   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-   
-   // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear color and depth buffers
-   // glMatrixMode(GL_MODELVIEW);     // To operate on model-view matrix
- 
-   // // Render a color-cube consisting of 6 quads with different colors
-   // glLoadIdentity();                 // Reset the model-view matrix
-   // glTranslatef(0.0f, 0.0f, -7.0f);  // Move right and into the screen
-   // glRotatef(angleCubeX, 1.0f, 0.0f, 0.0f);  // Rotate about (1,1,1)-axis [NEW]
-   // glRotatef(angleCubeY, 0.0f, 1.0f, 0.0f);
-   // glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
-   // glScalef(scale, scale, scale);
-    
-   // glBegin(GL_POLYGON);                // Begin drawing the color cube with 6 quads
-   //    // Top face (y = 1.0f)
-   //    // Define vertices in counter-clockwise (CCW) order with normal pointing out
-   //    glColor3f(0.0f, 1.0f, 0.0f);     // Green
-   //         glVertex3f( 1.0f, 1.0f, -1.0f);
-   //         glVertex3f(-1.0f, 1.0f, -1.0f);
-   //         glVertex3f(-1.0f, 1.0f,  1.0f);
-   //         glVertex3f( 1.0f, 1.0f,  1.0f);
-      
-   //         // Bottom face (y = -1.0f)
-   //         glColor3f(1.0f, 0.5f, 0.0f);     // Orange
-   //         glVertex3f( 1.0f, -1.0f,  1.0f);
-   //         glVertex3f(-1.0f, -1.0f,  1.0f);
-   //         glVertex3f(-1.0f, -1.0f, -1.0f);
-   //         glVertex3f( 1.0f, -1.0f, -1.0f);
-      
-   //         // Front face  (z = 1.0f)
-   //         glColor3f(1.0f, 0.0f, 0.0f);     // Red
-   //         glVertex3f( 1.0f,  1.0f, 1.0f);
-   //         glVertex3f(-1.0f,  1.0f, 1.0f);
-   //         glVertex3f(-1.0f, -1.0f, 1.0f);
-   //         glVertex3f( 1.0f, -1.0f, 1.0f);
-      
-   //         // Back face (z = -1.0f)
-   //         glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
-   //         glVertex3f( 1.0f, -1.0f, -1.0f);
-   //         glVertex3f(-1.0f, -1.0f, -1.0f);
-   //         glVertex3f(-1.0f,  1.0f, -1.0f);
-   //         glVertex3f( 1.0f,  1.0f, -1.0f);
-      
-   //         // Left face (x = -1.0f)
-   //         glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-   //         glVertex3f(-1.0f,  1.0f,  1.0f);
-   //         glVertex3f(-1.0f,  1.0f, -1.0f);
-   //         glVertex3f(-1.0f, -1.0f, -1.0f);
-   //         glVertex3f(-1.0f, -1.0f,  1.0f);
-      
-   //         // Right face (x = 1.0f)
-   //         glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
-   //         glVertex3f(1.0f,  1.0f, -1.0f);
-   //         glVertex3f(1.0f,  1.0f,  1.0f);
-   //         glVertex3f(1.0f, -1.0f,  1.0f);
-   //         glVertex3f(1.0f, -1.0f, -1.0f);
-   //      glEnd();  // End of drawing color-cube
-    
+   /* cross product */
+   vr[0] = va[1] * vb[2] - vb[1] * va[2];
+   vr[1] = vb[0] * va[2] - va[0] * vb[2];
+   vr[2] = va[0] * vb[1] - vb[0] * va[1];
+
+   /* normalization factor */
+   val = sqrt( vr[0]*vr[0] + vr[1]*vr[1] + vr[2]*vr[2] );
+
+	norm[0] = vr[0]/val;
+	norm[1] = vr[1]/val;
+	norm[2] = vr[2]/val;
+    cout<<"anjing2"<<norm;
+
+}
 
 
-   // glEnd();  // End of drawing color-cube
- 
-   // glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
- 
-   // Update the rotational angle after each refresh [NEW]
-//   anglePyramid += 0.2f;
-//   angleCube -= 0.15f;
+int Model_OBJ::Load(char* filename)
+{
+	string line;
+	ifstream objFile (filename);
+	if (objFile.is_open())													// If obj file is open, continue
+	{
+
+		objFile.seekg (0, ios::end);										// Go to end of the file,
+		long fileSize = objFile.tellg();									// get file size
+		objFile.seekg (0, ios::beg);										// we'll use this to register memory for our 3d model
+
+		vertexBuffer = (float*) malloc (fileSize);							// Allocate memory for the verteces
+		Faces_Triangles = (float*) malloc(fileSize*sizeof(float));			// Allocate memory for the triangles
+		normals  = (float*) malloc(fileSize*sizeof(float));					// Allocate memory for the normals
+
+		int triangle_index = 0;												// Set triangle index to zero
+		int normal_index = 0;												// Set normal index to zero
+        int i = 0;
+
+		while (! objFile.eof() )											// Start reading file data
+		{
+		    i = i+1;
+			getline (objFile,line);											// Get line from file
+
+			if (line.c_str()[0] == 'v'&& line.c_str()[1]!= 't')										// The first character is a v: on this line is a vertex stored.
+			{
+				line[0] = ' ';												// Set first character to 0. This will allow us to use sscanf
+
+				sscanf(line.c_str(),"%f %f %f ",							// Read floats from the line: v X Y Z
+					&vertexBuffer[TotalConnectedPoints],
+					&vertexBuffer[TotalConnectedPoints+1],
+					&vertexBuffer[TotalConnectedPoints+2]);
+
+				TotalConnectedPoints += POINTS_PER_VERTEX;					// Add 3 to the total connected points
+			}
+			if (line.c_str()[0] == 'f')										// The first character is an 'f': on this line is a point stored
+			{
+		    	line[0] = ' ';												// Set first character to 0. This will allow us to use sscanf
+
+				int vertexNumber[4] = { 0, 0, 0 };
+				int tempa,tempb,tempc;
+                sscanf(line.c_str(),"%d/%d %d/%d %d/%d ",								// Read integers from the line:  f 1 2 3
+					&vertexNumber[0],
+					&tempa,								// First point of our triangle. This is an
+					&vertexNumber[1],
+					&tempb,					     // pointer to our vertexBuffer list
+					&vertexNumber[2],
+					&tempc);										// each point represents an X,Y,Z.
+
+				vertexNumber[0] -= 1;										// OBJ file starts counting from 1
+				vertexNumber[1] -= 1;										// OBJ file starts counting from 1
+				vertexNumber[2] -= 1;										// OBJ file starts counting from 1
+
+
+				/********************************************************************
+				 * Create triangles (f 1 2 3) from points: (v X Y Z) (v X Y Z) (v X Y Z).
+				 * The vertexBuffer contains all verteces
+				 * The triangles will be created using the verteces we read previously
+				 */
+
+				int tCounter = 0;
+				for (int i = 0; i < POINTS_PER_VERTEX; i++)
+				{
+					Faces_Triangles[triangle_index + tCounter   ] = vertexBuffer[3*vertexNumber[i] ];
+					Faces_Triangles[triangle_index + tCounter +1 ] = vertexBuffer[3*vertexNumber[i]+1 ];
+					Faces_Triangles[triangle_index + tCounter +2 ] = vertexBuffer[3*vertexNumber[i]+2 ];
+					tCounter += POINTS_PER_VERTEX;
+				}
+
+				/*********************************************************************
+				 * Calculate all normals, used for lighting
+				 */
+
+				float coord1[3] = { Faces_Triangles[triangle_index], Faces_Triangles[triangle_index+1],Faces_Triangles[triangle_index+2]};
+
+				float coord2[3] = {Faces_Triangles[triangle_index+3],Faces_Triangles[triangle_index+4],Faces_Triangles[triangle_index+5]};
+				float coord3[3] = {Faces_Triangles[triangle_index+6],Faces_Triangles[triangle_index+7],Faces_Triangles[triangle_index+8]};
+				float norm[3];
+				this->calculateNormal( coord1, coord2, coord3,norm);
+				tCounter = 0;
+
+				for (int i = 0; i < POINTS_PER_VERTEX; i++)
+				{
+					normals[normal_index + tCounter ] = norm[0];
+
+					normals[normal_index + tCounter +1] = norm[1];
+					normals[normal_index + tCounter +2] = norm[2];
+					tCounter += POINTS_PER_VERTEX;
+
+				}
+
+				triangle_index += TOTAL_FLOATS_IN_TRIANGLE;
+				normal_index += TOTAL_FLOATS_IN_TRIANGLE;
+				TotalConnectedTriangles += TOTAL_FLOATS_IN_TRIANGLE;
+			}
+		}
+		objFile.close();														// Close OBJ file
+	}
+	else
+	{
+		cout << "Unable to open file";
+	}
+	return 0;
+}
+
+void Model_OBJ::Release()
+{
+	free(this->Faces_Triangles);
+	free(this->normals);
+	free(this->vertexBuffer);
+}
+
+void Model_OBJ::Draw()
+{
+ 	glEnableClientState(GL_VERTEX_ARRAY);						// Enable vertex arrays
+ 	glEnableClientState(GL_NORMAL_ARRAY);						// Enable normal arrays
+	glVertexPointer(3,GL_FLOAT,	0,Faces_Triangles);				// Vertex Pointer to triangle array
+	glNormalPointer(GL_FLOAT, 0, normals);						// Normal pointer to normal array
+	glDrawArrays(GL_TRIANGLES, 0, TotalConnectedTriangles);		// Draw the triangles
+	glDisableClientState(GL_VERTEX_ARRAY);						// Disable vertex arrays
+	glDisableClientState(GL_NORMAL_ARRAY);						// Disable normal arrays
+}
+
+/***************************************************************************
+ * Program code
+ ***************************************************************************/
+
+Model_OBJ obj;
+float g_rotation;
+glutWindow win;
+
+void display()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+	gluLookAt( 0,1,4, 0,0,0, 0,1,0);
+	glScalef(scale, scale, scale);
+	glRotatef(angleCubeX, 1.0f, 0.0f, 0.0f);  // Rotate about (1,1,1)-axis [NEW]
+    glRotatef(angleCubeY, 0.0f, 1.0f, 0.0f);
+    glRotatef(angleCubeZ, 0.0f, 0.0f, 1.0f);
+    glScalef(scale, scale, scale);
+    gluLookAt(cameraX, cameraY, cameraZ, cameraX+pickX, cameraY+pickY, cameraZ+pickZ,  upVectorX, upVectorY, upVectorZ);
+	glPushMatrix();
+		glRotatef(90,0,1,0);
+		g_rotation++;
+		obj.Draw();
+	glPopMatrix();
+	glutSwapBuffers();
+}
+
+
+void initialize ()
+{
+    glMatrixMode(GL_PROJECTION);
+	glViewport(0, 0, win.width, win.height);
+	GLfloat aspect = (GLfloat) win.width / win.height;
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+	gluPerspective(win.field_of_view_angle, aspect, win.z_near, win.z_far);
+    glMatrixMode(GL_MODELVIEW);
+    glShadeModel( GL_SMOOTH );
+    glClearColor( 0.0f, 0.1f, 0.0f, 0.5f );
+    glClearDepth( 1.0f );
+    glEnable( GL_DEPTH_TEST );
+    glDepthFunc( GL_LEQUAL );
+    glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
+
+    GLfloat amb_light[] = { 0.1, 0.1, 0.1, 1.0 };
+    GLfloat diffuse[] = { 0.6, 0.6, 0.6, 1 };
+    GLfloat specular[] = { 0.7, 0.7, 0.3, 1 };
+    glLightModelfv( GL_LIGHT_MODEL_AMBIENT, amb_light );
+    glLightfv( GL_LIGHT0, GL_DIFFUSE, diffuse );
+    glLightfv( GL_LIGHT0, GL_SPECULAR, specular );
+    glEnable( GL_LIGHT0 );
+    glEnable( GL_COLOR_MATERIAL );
+    glShadeModel( GL_SMOOTH );
+    glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
+    glDepthFunc( GL_LEQUAL );
+    glEnable( GL_DEPTH_TEST );
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+}
+
+/*
+void keyboard ( unsigned char key, int x, int y )
+{
+  switch ( key ) {
+    case KEY_ESCAPE:
+      exit ( 0 );
+      break;
+    default:
+      break;
+  }
+}
+*/
+
+
+void reset() {
+	anglePyramid = initAnglePyramid;  // Rotational angle for pyramid [NEW]
+	angleCubeX = initAngleCubeX;     // Rotational angle for cube [NEW]
+	angleCubeY = initAngleCubeY;
+	angleCubeZ = initAngleCubeZ;
+
+	scale = initScale;
+
+	cameraX = initCameraX;
+	cameraY = initCameraY;
+	cameraZ = initCameraZ;
+
+	phi = initPhi;
+	theta = initTheta;
+
 }
 
 void keyboard(unsigned char key, int x, int y){
@@ -124,98 +372,36 @@ void keyboard(unsigned char key, int x, int y){
         case 's': case 'S': angleCubeX -= 2.5f;  glutPostRedisplay(); break;
         case 'q': case 'Q': angleCubeZ += 2.5f;  glutPostRedisplay(); break;
         case 'e': case 'E': angleCubeZ -= 2.5f;  glutPostRedisplay(); break;
+        case 'r': case 'R': reset();  glutPostRedisplay(); break;
         case '+': case '=': scale += 0.05f;  glutPostRedisplay(); break;
         case '-': scale -= 0.05f;  glutPostRedisplay(); break;
+
     }
 }
- 
-/* Called back when timer expired [NEW] */
-void timer(int value) {
-   glutPostRedisplay();      // Post re-paint request to activate display()
-   glutTimerFunc(refreshMills, timer, 0); // next timer call milliseconds later
+
+
+int main(int argc, char **argv)
+{
+	// set window values
+	win.width = 640;
+	win.height = 480;
+	win.title = "OpenGL/GLUT OBJ Loader.";
+	win.field_of_view_angle = 45;
+	win.z_near = 1.0f;
+	win.z_far = 500.0f;
+
+	// initialize and run program
+	glutInit(&argc, argv);                                      // GLUT initialization
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );  // Display Mode
+	glutInitWindowSize(win.width,win.height);					// set window size
+	glutCreateWindow(win.title);								// create Window
+	glutDisplayFunc(display);									// register Display Function
+	glutIdleFunc( display );									// register Idle Function
+    glutKeyboardFunc( keyboard );								// register Keyboard Handler
+	initialize();
+	//D:/Juro/Tugas-Tugas/KULIAH/GRAFKOM/CobaOBJ/atena.obj
+	obj.Load("C:/Users/Yanichi/Documents/untitled.obj");
+	glutMainLoop();												// run GLUT mainloop
+	return 0;
 }
- 
-/* Handler for window re-size event. Called back when the window first appears and
-   whenever the window is re-sized with its new width and height */
-void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integer
-   // Compute aspect ratio of the new window
-   if (height == 0) height = 1;                // To prevent divide by 0
-   GLfloat aspect = (GLfloat)width / (GLfloat)height;
- 
-   // Set the viewport to cover the new window
-   glViewport(0, 0, width, height);
- 
-   // Set the aspect ratio of the clipping volume to match the viewport
-   glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
-   glLoadIdentity();             // Reset
-   // Enable perspective projection with fovy, aspect, zNear and zFar
-   gluPerspective(45.0f, aspect, 0.1f, 100.0f);
-}
- 
-/* Main function: GLUT runs as a console application starting at main() */
-int main(int argc, char** argv) {
-   
-   objl::Loader Loader;
-   bool loadout = Loader.LoadFile("LoPoly/Great Lakes Biplane.obj");
-   if (loadout) {
-      for (int i = 0; i < Loader.LoadedMeshes.size(); i++)
-		{
-			// Copy one of the loaded meshes to be our current mesh
-			objl::Mesh curMesh = Loader.LoadedMeshes[i];
 
-			// // Print Mesh Name
-			// file << "Mesh " << i << ": " << curMesh.MeshName << "\n";
-
-			// // Print Vertices
-			// file << "Vertices:\n";
-
-			// Go through each vertex and print its number,
-			//  position, normal, and texture coordinate
-			for (int j = 0; j < curMesh.Vertices.size(); j++){
-            vertices.push_back(curMesh.Vertices[j].Position.X);
-            vertices.push_back(curMesh.Vertices[j].Position.Y);
-            vertices.push_back(curMesh.Vertices[j].Position.Z);
-            textureCoords.push_back(curMesh.Vertices[j].TextureCoordinate.X);
-            textureCoords.push_back(curMesh.Vertices[j].TextureCoordinate.Y);
-            colors.push_back(0.0);
-            colors.push_back(0.0);
-            colors.push_back(0.0);
-            colors.push_back(0.0);
-				// file << "V" << j << ": " <<
-				// 	"P(" << curMesh.Vertices[j].Position.X << ", " << curMesh.Vertices[j].Position.Y << ", " << curMesh.Vertices[j].Position.Z << ") " <<
-				// 	"N(" << curMesh.Vertices[j].Normal.X << ", " << curMesh.Vertices[j].Normal.Y << ", " << curMesh.Vertices[j].Normal.Z << ") " <<
-				// 	"TC(" << curMesh.Vertices[j].TextureCoordinate.X << ", " << curMesh.Vertices[j].TextureCoordinate.Y << ")\n";
-			}
-
-      // for (int i = 0; i < iterator->second.size(); i += 3) {
-      //    int t0 = iterator->second[i + 0];
-      //    int t1 = iterator->second[i + 1];
-      //    int t2 = iterator->second[i + 2];
-      //    vertices.push_back(mesh.vertices[t0].x);
-      //    vertices.push_back(mesh.vertices[t0].y);
-      //    vertices.push_back(mesh.vertices[t0].z);
-      //    vertices.push_back(mesh.vertices[t1].x);
-      //    vertices.push_back(mesh.vertices[t1].y);
-      //    vertices.push_back(mesh.vertices[t1].z);
-      //    vertices.push_back(mesh.vertices[t2].x);
-      //    vertices.push_back(mesh.vertices[t2].y);
-      //    vertices.push_back(mesh.vertices[t2].z);
-
-      //    // [...] Same for colors and texture coords.
-      // }
-      }
-   }
-   glutInit(&argc, argv);            // Initialize GLUT
-   glutInitDisplayMode(GLUT_DOUBLE); // Enable double buffered mode
-   glutInitWindowSize(640, 480);   // Set the window's initial width & height
-   glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
-   glutCreateWindow(title);          // Create window with the given title
-   glutDisplayFunc(display);       // Register callback handler for window re-paint event
-   
-   glutReshapeFunc(reshape);       // Register callback handler for window re-size event
-   initGL();
-    glutKeyboardFunc(keyboard);// Our own OpenGL initialization
-   //glutTimerFunc(0, timer, 0);     // First timer call immediately [NEW]
-   glutMainLoop();                 // Enter the infinite event-processing loop
-   return 0;
-}
