@@ -87,10 +87,10 @@ class Model_OBJ
   public:
 	Model_OBJ();
     void calculateNormal(float* coord1,float* coord2,float* coord3, float* norm );
-    int Load(char *filename);	// Loads the model
+    int Load(char *filename, int color);	// Loads the model
 	void Draw();					// Draws the model on the screen
 	void Release();				// Release the model
-
+    float* colors;
 	float* normals;							// Stores the normals
     float* Faces_Triangles;					// Stores the triangles
 	float* vertexBuffer;					// Stores the points which make the object
@@ -138,7 +138,7 @@ void Model_OBJ::calculateNormal( float *coord1, float *coord2, float *coord3 ,fl
 }
 
 
-int Model_OBJ::Load(char* filename)
+int Model_OBJ::Load(char* filename, int color)
 {
 	string line;
 	ifstream objFile (filename);
@@ -151,10 +151,12 @@ int Model_OBJ::Load(char* filename)
 
 		vertexBuffer = (float*) malloc (fileSize);							// Allocate memory for the verteces
 		Faces_Triangles = (float*) malloc(fileSize*sizeof(float));			// Allocate memory for the triangles
-		normals  = (float*) malloc(fileSize*sizeof(float));					// Allocate memory for the normals
+		normals  = (float*) malloc(fileSize*sizeof(float));
+		colors = (float*) malloc(fileSize*sizeof(float));					// Allocate memory for the normals
 
 		int triangle_index = 0;												// Set triangle index to zero
-		int normal_index = 0;												// Set normal index to zero
+		int normal_index = 0;
+		int color_index = 0;												// Set normal index to zero
         int i = 0;
 
 		while (! objFile.eof() )											// Start reading file data
@@ -212,7 +214,6 @@ int Model_OBJ::Load(char* filename)
 				 */
 
 				float coord1[3] = { Faces_Triangles[triangle_index], Faces_Triangles[triangle_index+1],Faces_Triangles[triangle_index+2]};
-
 				float coord2[3] = {Faces_Triangles[triangle_index+3],Faces_Triangles[triangle_index+4],Faces_Triangles[triangle_index+5]};
 				float coord3[3] = {Faces_Triangles[triangle_index+6],Faces_Triangles[triangle_index+7],Faces_Triangles[triangle_index+8]};
 				float norm[3];
@@ -222,13 +223,22 @@ int Model_OBJ::Load(char* filename)
 				for (int i = 0; i < POINTS_PER_VERTEX; i++)
 				{
 					normals[normal_index + tCounter ] = norm[0];
-
 					normals[normal_index + tCounter +1] = norm[1];
 					normals[normal_index + tCounter +2] = norm[2];
 					tCounter += POINTS_PER_VERTEX;
 
 				}
-
+				if (color == 1){
+                    tCounter = 0;
+                    for (int i = 0; i < POINTS_PER_VERTEX; i++)
+                    {
+                        colors[color_index + tCounter ] = 30;
+                        normals[color_index + tCounter +1] = 30;
+                        normals[color_index + tCounter +2] = 30;
+                        tCounter += POINTS_PER_VERTEX;
+                    }
+                    color_index +=TOTAL_FLOATS_IN_TRIANGLE;
+				}
 				triangle_index += TOTAL_FLOATS_IN_TRIANGLE;
 				normal_index += TOTAL_FLOATS_IN_TRIANGLE;
 				TotalConnectedTriangles += TOTAL_FLOATS_IN_TRIANGLE;
@@ -253,9 +263,11 @@ void Model_OBJ::Release()
 void Model_OBJ::Draw()
 {
  	glEnableClientState(GL_VERTEX_ARRAY);						// Enable vertex arrays
+ 	glEnableClientState(GL_COLOR_ARRAY);
  	glEnableClientState(GL_NORMAL_ARRAY);						// Enable normal arrays
 	glVertexPointer(3,GL_FLOAT,	0,Faces_Triangles);				// Vertex Pointer to triangle array
 	glNormalPointer(GL_FLOAT, 0, normals);						// Normal pointer to normal array
+	glColorPointer(3, GL_FLOAT, 0, colors);
 	glDrawArrays(GL_TRIANGLES, 0, TotalConnectedTriangles);		// Draw the triangles
 	glDisableClientState(GL_VERTEX_ARRAY);						// Disable vertex arrays
 	glDisableClientState(GL_NORMAL_ARRAY);						// Disable normal arrays
@@ -349,9 +361,9 @@ void reset() {
 
 	phi = initPhi;
 	theta = initTheta;
-
+}
 int refreshMills = 15;
- 
+
 float *cross(float x, float y, float z) {
 	float *result = new float[3];
 
@@ -362,29 +374,12 @@ float *cross(float x, float y, float z) {
 	up[2] = 0.0f;
 
 
-	result[0] = y * up[2] - z * up[1]; 
-    result[1] = z * up[0] - x * up[2]; 
-    result[2] = x * up[1] - y * up[0]; 
+	result[0] = y * up[2] - z * up[1];
+    result[1] = z * up[0] - x * up[2];
+    result[2] = x * up[1] - y * up[0];
 
 
 	return result;
-
-}
-
-void reset() {
-	anglePyramid = initAnglePyramid;  // Rotational angle for pyramid [NEW]
-	angleCubeX = initAngleCubeX;     // Rotational angle for cube [NEW]
-	angleCubeY = initAngleCubeY;
-	angleCubeZ = initAngleCubeZ;
-
-	scale = initScale;
-
-	cameraX = initCameraX;
-	cameraY = initCameraY;
-	cameraZ = initCameraZ;
-
-	phi = initPhi;
-	theta = initTheta;
 
 }
 
@@ -427,24 +422,24 @@ void arrow(int key, int x, int y) {
 	pickY = 0;
 	pickZ = -sin(theta);
 }
- 
+
 
 /* Called back when timer expired [NEW] */
 void timer(int value) {
    glutPostRedisplay();      // Post re-paint request to activate display()
    glutTimerFunc(refreshMills, timer, 0); // next timer call milliseconds later
 }
- 
+
 /* Handler for window re-size event. Called back when the window first appears and
    whenever the window is re-sized with its new width and height */
 void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integer
    // Compute aspect ratio of the new window
    if (height == 0) height = 1;                // To prevent divide by 0
    GLfloat aspect = (GLfloat)width / (GLfloat)height;
- 
+
    // Set the viewport to cover the new window
    glViewport(0, 0, width, height);
- 
+
    // Set the aspect ratio of the clipping volume to match the viewport
    glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
    glLoadIdentity();             // Reset
@@ -469,12 +464,12 @@ int main(int argc, char **argv)
 	glutCreateWindow(win.title);								// create Window
 	glutDisplayFunc(display);									// register Display Function
 	glutIdleFunc( display );									// register Idle Function
-	glutReshapeFunc(reshape);       // Register callback handler for window re-size event
+	//glutReshapeFunc(reshape);       // Register callback handler for window re-size event
     glutKeyboardFunc( keyboard );
 	glutSpecialFunc(arrow);								// register Keyboard Handler
 	initialize();
 	//D:/Juro/Tugas-Tugas/KULIAH/GRAFKOM/CobaOBJ/atena.obj
-	obj.Load("C:/Users/Yanichi/Documents/untitled.obj");
+	obj.Load("C:/Users/Yanichi/Documents/untitled.obj",1);
 	glutMainLoop();												// run GLUT mainloop
 	return 0;
 }
